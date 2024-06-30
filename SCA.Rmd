@@ -1,0 +1,280 @@
+---
+title: "SCA1"
+author: "Elisa Lotero Velasquez"
+date: "3/6/2022"
+output: pdf_document
+---
+Cargamos librerias
+```{r}
+library(ca)
+library(maditr)
+library(tidyverse)
+library(dplyr)
+
+library("FactoMineR")
+library("factoextra")
+
+library("gplots")
+```
+
+Seleccionamos la base de datos completa y la base de datos de los mercados 
+```{r}
+data <- read.csv("https://raw.githubusercontent.com/elisaLotero/ElisaData/main/bd_completa_csv.csv", header = TRUE)
+data<- data %>% filter(!c(tipologia.mercado == "compra"))%>% filter(!(tipologia.mercado == "autoconsumo"))%>%
+  filter(!(tipologia.mercado == "interna"))%>%
+  filter(!(tipo.terreno == "reventa"))
+```
+<!-- Definimos la bd de variables socioeconomicas incluyendo el proceso para definir la variables de consumo de silvestres  -->
+<!-- ```{r} -->
+<!-- data.diversidad <- data %>% select(c(ï..comunidad, num.entrevista , nombre.recurso, tipo.mercado.venta)) %>% -->
+<!--   distinct() -->
+
+<!-- data.diversidad$conteo<-1 -->
+
+<!-- data.diversidad <- data.diversidad %>%  -->
+<!--   group_by(ï..comunidad, num.entrevista, tipo.mercado.venta)%>% -->
+<!--   summarise(no.productos = sum(conteo)) -->
+
+<!-- data.diversidad$prop.venta <- 0 -->
+
+<!-- for (i in 1:dim(data.diversidad)[1]){ -->
+<!--   if (data.diversidad$no.productos[i] <= 7){ -->
+<!--     data.diversidad$prop.venta[i] <- "bajo" -->
+<!--   } else { -->
+<!--     if (data.diversidad$no.productos[i] <= 10){ -->
+<!--       data.diversidad$prop.venta[i] <- "medio" -->
+<!--     } else { -->
+<!--       data.diversidad$prop.venta[i] <- "alto" -->
+<!--     } -->
+<!--   } -->
+<!-- } -->
+
+<!-- ``` -->
+
+
+```{r}
+# data<-merge(x=data, y=data.diversidad, by.x = c("ï..comunidad", "num.entrevista", "tipo.mercado.venta"), by.y = c("ï..comunidad", "num.entrevista",  "tipo.mercado.venta"), all = TRUE)
+
+
+data <- data %>%
+  select(c(ï..comunidad, num.entrevista,
+            terreno.propiedad, tipologia.mercado, manejo, tipo.terreno, terreno.propiedad, riego, manejo.producto, manejo.estructura, manejo.herramienta, 
+            escolaridad, lengua, migracion, campesino, pastor, comercio,
+            tendero, jornalero, otro, productor))
+
+#unificamos variables sumando columnas
+data$productor_1rio = data$pastor + data$jornalero#+ data$campesino
+data <- data %>% select(!c(pastor, jornalero, campesino
+                               ))
+#unique(data$productor_1rio)
+data$productor_1rio[data$productor_1rio == 2 | data$productor_1rio == 3]<-1  
+
+data$productor_2rio =  data$tendero + data$comercio
+data <- data %>% select(!c(tendero, comercio))
+#unique(data$productor_2rio)
+data$productor_2rio[data$productor_2rio == 2] <- 1 
+
+data$productor_3rio = data$otro + data$productor 
+data <- data %>% select(!c(otro, productor))
+#unique(data$productor_3rio)
+data$productor_3rio[data$productor_3rio == 2] <- 1
+
+data[is.na(data)] <- 0
+
+data$productor_1rio[data$productor_1rio == 1] <- "productor_1rio"
+data$productor_2rio[data$productor_2rio == 1] <- "productor_2rio"
+data$productor_3rio[data$productor_3rio == 1] <- "productor_3rio"
+
+data$manejo[data$manejo == "cultivado"] <- 0
+data$manejo.herramienta[data$manejo.herramienta == "manual"] <- 0
+data$riego[data$riego == "temporal"] <- 0
+data$terreno.propiedad[data$terreno.propiedad == "comunal"] <- 0
+data$lengua[data$lengua == "espanol" | data$lengua == "bilingue" ] <- 0
+data$escolaridad[data$escolaridad == "primaria" | data$escolaridad == "secundaria" | data$escolaridad == "bachiller"] <- 0
+data$terreno.propiedad[data$terreno.propiedad == "propio" | data$terreno.propiedad == "ejidal"] <- 0
+
+data <- data %>%
+  distinct()
+
+data <- unite(data, id, ï..comunidad:num.entrevista,  sep="_", remove = FALSE)
+```
+
+```{r}
+Silvestre = data.frame(Variable= c("silvestre", "monte"), Cluster= "Silvestre")
+
+Intensificado <- data.frame(Variable = c("domesticado", "invernadero", "rotacion_cultivo", "division_cultivo", "descanso_tierra", "manual+animal", "cal", "abono_quimico+abono_animal", "abono_animal", "abono_plantas", "abono_quimico", "plaguicida", "abono_quimico+abono_plantas", "parcela"), Cluster = "Intensificado")
+
+Incipiente <- data.frame(Variable = c("temporal+manguera", "manguera", "tolerado", "huerto", "promovido"), Cluster = "Incipiente")
+
+Nivel_1 <- data.frame(Variable = c("rentado", "Aticpac", "nahuatl", "no", "Xochitlalpa", "productor_2rio"), Cluster = "Nivel_1")
+
+Nivel_2 <- data.frame(Variable = c("productor_1rio", "Matlahuacala"), Cluster = "Nivel_2")
+
+Nivel_3 <- data.frame(Variable = c("Coyomeapan", "universidad", "productor_3rio", "nacional", "internacional"), Cluster = "Nivel_3")
+```
+
+
+```{r}
+dataREF <- rbind(Silvestre, Incipiente, Intensificado, Nivel_1, Nivel_2, Nivel_3)
+```
+
+```{r}
+for (j in 1:dim(data)[2]){
+  for (i in 1: dim(data)[1]){
+    row <- which(dataREF$Variable==data[i,j])
+    if (identical(row, integer(0)) ==TRUE){}#no hagas nada {} 
+    else{
+    data[i,j] <- dataREF$Cluster[row]}
+  }
+}
+
+data <- data %>%
+  distinct()
+
+```
+
+```{r}
+data1 <- data %>% select(c(id, tipologia.mercado, ï..comunidad, terreno.propiedad, escolaridad, migracion, lengua, productor_1rio, productor_2rio, productor_3rio))
+
+data2 <- data %>% select(c(id, tipologia.mercado, manejo, manejo.producto, manejo.estructura, manejo.herramienta, tipo.terreno, riego))
+
+data3 <- data %>% select(-c( tipologia.mercado, num.entrevista, ï..comunidad))
+```
+
+```{r}
+data1 <- data1 %>% distinct()  #que queden solo los distintos
+
+data1 <- data1  %>% gather("Valor", "Niveles", 3:10) #el gather hace que las variables que estan en columnas, se vuelvan valores de renglones
+
+data1$Conteo <- 1
+
+data1 <- data1 %>% group_by(id, tipologia.mercado, Niveles) %>%
+  summarise(Total =sum(Conteo)) %>%
+  filter(!(Niveles==0))  #aqui hacemos un primer 
+
+data1 <- data1 %>% group_by(tipologia.mercado,Niveles) %>%
+  summarise(Total =sum(Total)) 
+
+data1 <- data1 %>% dcast(tipologia.mercado ~ Niveles, value.var = "Total")
+
+###############################
+
+data2 <- data2 %>% distinct()  #que queden solo los distintos
+
+data2 <- data2  %>% gather("Valor", "Niveles", 3:8) #el gather hace que las variables que estan en columnas, se vuelvan valores de renglones
+
+data2$Conteo <- 1
+
+data2 <- data2 %>% group_by(id, tipologia.mercado, Niveles) %>%
+  summarise(Total =sum(Conteo)) %>%
+  filter(!(Niveles==0))  #aqui hacemos un primer 
+
+data2 <- data2 %>% group_by(tipologia.mercado,Niveles) %>%
+  summarise(Total =sum(Total)) 
+
+
+data2 <- data2 %>% dcast(tipologia.mercado ~ Niveles, value.var = "Total")
+```
+
+```{r}
+data3 <- data3 %>% distinct()  #que queden solo los distintos
+
+data3_A <- data3  %>% gather("Valor_A", "Niveles_A", 3:8) #el gather hace que las variables que estan en columnas, se vuelvan valores de renglones
+data3_A <- data3_A %>% select(c(id, Niveles_A))
+
+data3_B <- data3  %>% gather("Valor_B", "Niveles_B", c(2, 9:14))
+data3_B <- data3_B %>% select(c(id, Niveles_B))
+
+data3 <- merge(x=data3_A, y=data3_B, by.x = "id")
+
+data3 <- data3 %>% filter(!(Niveles_A==0)) 
+data3 <- data3 %>% filter(!(Niveles_B==0)) 
+data3 <- data3 %>% distinct() 
+
+
+data3$Conteo <- 1
+
+
+data3 <- data3 %>% group_by(Niveles_A, Niveles_B) %>%
+  summarise(Total =sum(Conteo))
+
+data3 <- data3 %>% dcast(Niveles_A ~ Niveles_B, value.var = "Total")
+```
+
+Hacemos el SCA1
+```{r}
+dataSCA1 <- data1[,-1]
+
+row.names(dataSCA1) = data1$tipologia.mercado
+
+dataSCA1table <- as.table(as.matrix(dataSCA1))
+
+balloonplot(t(dataSCA1table), main ="", xlab ="", ylab="",
+            label = FALSE, show.margins = FALSE)
+
+chisq <- chisq.test(dataSCA1table)
+chisq
+
+#install.packages("chisq.posthoc.test")
+library(chisq.posthoc.test)
+
+chisq.posthoc.test(dataSCA1table,
+                   method = "bonferroni")
+```
+Hacemos el SCA2
+```{r}
+dataSCA2 <- data2[,-1]
+
+row.names(dataSCA2) = data1$tipologia.mercado
+
+dataSCA2<- as.matrix(dataSCA2)
+
+dataSCA2table <- as.table(as.matrix(dataSCA2))
+
+balloonplot(t(dataSCA2table), main ="", xlab ="", ylab="",
+            label = FALSE, show.margins = FALSE)
+
+chisq2 <- chisq.test(dataSCA2table)
+chisq2
+
+chisq.posthoc.test(dataSCA2table,
+                   method = "bonferroni")
+```
+Hacemos el SCA3
+```{r}
+dataSCA3 <- data3[,-1]
+
+row.names(dataSCA3) = dataSCA3$Niveles_A
+
+dataSCA3table <- as.table(as.matrix(dataSCA3))
+
+balloonplot(t(dataSCA3table), main ="", xlab ="", ylab="",
+            label = FALSE, show.margins = FALSE)
+
+chisq <- chisq.test(dataSCA3table)
+chisq
+
+#install.packages("chisq.posthoc.test")
+library(chisq.posthoc.test)
+
+chisq.posthoc.test(dataSCA3table,
+                   method = "bonferroni")
+```
+
+```{r}
+chisq.test(dataSCA2table[c(1,2),c(1,2)])
+chisq.test(dataSCA2table[c(1,3),c(1,3)])
+chisq.test(dataSCA2table[c(2,3),c(2,3)])
+chisq.test(dataSCA2table[c(1,2),c(1,3)])
+chisq.test(dataSCA2table[c(1,2),c(2,3)])
+chisq.test(dataSCA2table[c(1,3),c(1,2)])
+chisq.test(dataSCA2table[c(1,3),c(2,3)])
+chisq.test(dataSCA2table[c(2,3),c(1,2)])
+chisq.test(dataSCA2table[c(2,3),c(1,3)])
+
+dataSCA2table[c(2,3),c(2,3)]
+dataSCA2table[c(1,2),c(2,3)]
+
+```
+
+
