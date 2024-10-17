@@ -14,7 +14,7 @@ data.mercados <- data %>%
   filter(!(tipo.mercado.venta == "comunitario"))
 
 ###seleccionamos las variables para hacer el MCA
-data.mercados <- data.mercados %>% select(ï..comunidad, num.entrevista, tipo.mercado.venta, no.productos, distancia, tiempo, tipo.de.carretera)%>% 
+data.mercados <- data.mercados %>% select(Ã¯..comunidad, num.entrevista, tipo.mercado.venta, no.productos, distancia, tiempo, tipo.de.carretera)%>% 
   distinct()
 
 ##vamos a darle valores a la cantidad de productos vendidos 
@@ -82,12 +82,17 @@ for (i in 1:dim(newdata.mercados)[1]){
 #newdata.mercados <- newdata.mercados %>%
   #select(!c(mixta, "mercado_micro-regional"))
 
-newdata.mercados.dis <- newdata.mercados [ ,3:18] #%>% ungroup () %>% dplyr::select(!c(ï..comunidad, num.entrevista, prop.factor))
+newdata.mercados.dis <- newdata.mercados [ ,3:18] #%>% ungroup () %>% dplyr::select(!c(Ã¯..comunidad, num.entrevista, prop.factor))
 
 library(ClustOfVar)
 
 ##PCA
 PCA(newdata.mercados.dis)
+
+##Validamos el PCA
+library(psych)
+KMO(newdata.mercados.dis)
+cortest.bartlett(newdata.mercados.dis)
 
 # Hacemos el dendograma 
 variable_tree <- hclustvar(X.quanti = newdata.mercados.dis) # puede er quanti o quali (em este caso son valores cuantitativos)
