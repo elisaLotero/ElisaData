@@ -1,4 +1,4 @@
-##AGRUPACIÓN POR ENTREVISTA
+##AGRUPACIÃ“N POR ENTREVISTA
 
 #install.packages(c("FactoMineR", "factoextra"))
 
@@ -12,7 +12,7 @@ library("factoextra")
 ###SELECCIONAMOS EL DIRECTORIO Y LA BASE DE DATOS 
 data <- read.csv("https://raw.githubusercontent.com/elisaLotero/ElisaData/main/bd_completa_csv.csv", header = TRUE)
 
-data.manejo <- data %>% select(c(ï..comunidad, num.entrevista, 
+data.manejo <- data %>% select(c(Ã¯..comunidad, num.entrevista, 
                                   nombre.recurso,manejo, 
                                   tipo.terreno,
                                   riego, manejo.producto, 
@@ -36,7 +36,7 @@ data.manejo$manejo.producto[is.na(data.manejo$manejo.producto)] <- "no_usa_produ
 data.manejo$manejo.estructura[is.na(data.manejo$manejo.estructura)] <- "NA_estructura"
 
 
-####homologamos términos
+####homologamos tÃ©rminos
 #unique(data.manejo$manejo.producto)
 data.manejo$manejo.producto[data.manejo$manejo.producto == "abono_animal"]<- "insumo"
 data.manejo$manejo.producto[data.manejo$manejo.producto == "abono_plantas"]<- "insumo"
@@ -66,7 +66,7 @@ data.manejo <- data.manejo %>% distinct()
 data.manejo$conteo<-1
 
 ###hacemos un summerise del conteo para que me cuente cuantos productos son manejados 
-###dentro de cada combinación de variables 
+###dentro de cada combinaciÃ³n de variables 
 data.manejo <- data.manejo %>% group_by(manejo, 
                                         tipo.terreno, 
                                         riego, manejo.producto, 
@@ -114,7 +114,7 @@ for (i in 1:dim(newdata.manejo)[1]){
 
 newdata.manejo <- newdata.manejo %>% select(!c(temporal, no_usa_productos, 
                                                manual, NA_estructura))
-newdata.manejo.dis <- newdata.manejo [ , c(3:13)] #%>% ungroup () %>% dplyr::select(!c(ï..comunidad, num.entrevista, prop.factor))
+newdata.manejo.dis <- newdata.manejo [ , c(3:13)] #%>% ungroup () %>% dplyr::select(!c(Ã¯..comunidad, num.entrevista, prop.factor))
 
 #eliminamos las columanas de NA y las que no son de utilidad
 
@@ -129,7 +129,12 @@ variable_tree <- hclustvar(X.quanti = newdata.manejo.dis) # puede er quanti o qu
 ##graficamos
 #par(mfrow=c(1,2))
 PCA(newdata.manejo.dis)
-#stability(variable_tree, B=24)
+
+##Validamos el PCA
+library(psych)
+KMO(newdata.manejo.dis)
+cortest.bartlett(newdata.manejo.dis)
+
 #plot(variable_tree, type = "index")
 plot(variable_tree)
 #dev.off()
