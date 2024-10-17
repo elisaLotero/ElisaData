@@ -11,7 +11,7 @@ data <- read.csv("https://raw.githubusercontent.com/elisaLotero/ElisaData/main/b
 
 #Seleccionamos las variables que necesitamos (socieconomicas)
 dataSE <- data %>%
-  select(c(Ô..comunidad, num.entrevista, terreno.propiedad, 
+  select(c(√Ø..comunidad, num.entrevista, terreno.propiedad, 
             escolaridad, lengua, origen, migracion, #campesino
             pastor, comercio,
             tendero, productor, jornalero, otro
@@ -68,8 +68,8 @@ dataSE <- dataSE %>% distinct()
 dataSE$conteo<-1
 
 ###hacemos un summerise del conteo para que me cuente cuantos productos son manejados 
-###dentro de cada combinaciÛn de variables 
-dataSE <- dataSE %>% group_by(Ô..comunidad, num.entrevista, escolaridad, lengua, origen, 
+###dentro de cada combinaci√≥n de variables 
+dataSE <- dataSE %>% group_by(√Ø..comunidad, num.entrevista, escolaridad, lengua, origen, 
                               migracion, productor_1rio, productor_2rio, productor_3rio)%>%
   summarise(propiedad = first(terreno.propiedad))
 
@@ -84,7 +84,7 @@ dataSE$conteo<-1
 
 #dcasteamos
 
-dataSE<-unite(dataSE, id, Ô..comunidad:num.entrevista,  sep="_", remove = FALSE)
+dataSE<-unite(dataSE, id, √Ø..comunidad:num.entrevista,  sep="_", remove = FALSE)
 
 dataSE$num.entrevista <- NULL
 
@@ -94,9 +94,9 @@ newdata.SE <- cbind(dcast(dataSE, id +  productor_1rio + productor_2rio + produc
                     dcast(dataSE, id +  productor_1rio + productor_2rio + productor_3rio ~ lengua, value.var = "conteo")[ ,-c( 1:4)],
                     dcast(dataSE, id +  productor_1rio + productor_2rio + productor_3rio ~ origen, value.var = "conteo")[ ,-c( 1:4)],
                     dcast(dataSE, id +  productor_1rio + productor_2rio + productor_3rio ~ migracion, value.var = "conteo")[ ,-c( 1:4)],
-                    dcast(dataSE, id +  productor_1rio + productor_2rio + productor_3rio ~ Ô..comunidad, value.var = "conteo")[ ,-c( 1:4)])
+                    dcast(dataSE, id +  productor_1rio + productor_2rio + productor_3rio ~ √Ø..comunidad, value.var = "conteo")[ ,-c( 1:4)])
 
-#dejamos todo en matrÌz de 1 y 0
+#dejamos todo en matr√≠z de 1 y 0
 #newdata.SE[ ,3:27] <- (newdata.SE[ ,3:27]/newdata.SE[ ,3:27])
 newdata.SE[is.na(newdata.SE)] <- 0
 
@@ -112,6 +112,11 @@ library(ClustOfVar)
 
 ##PCA
 PCA(newdata.SE.dis)
+
+##Validamos el PCA
+library(psych)
+KMO(newdata.SE.dis[ ,1:8])
+cortest.bartlett(newdata.SE.dis[ ,1:8])
 
 # Hacemos el dendograma 
 variable_tree <- hclustvar(X.quanti = newdata.SE.dis) # puede er quanti o quali (em este caso son valores cuantitativos)
