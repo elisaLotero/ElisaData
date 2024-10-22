@@ -91,7 +91,6 @@ PCA(newdata.mercados.dis)
 
 ##Validamos el PCA
 library(psych)
-KMO(newdata.mercados.dis)
 cortest.bartlett(newdata.mercados.dis)
 
 # Hacemos el dendograma 
