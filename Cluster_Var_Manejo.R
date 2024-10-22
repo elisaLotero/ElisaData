@@ -132,7 +132,6 @@ PCA(newdata.manejo.dis)
 
 ##Validamos el PCA
 library(psych)
-KMO(newdata.manejo.dis)
 cortest.bartlett(newdata.manejo.dis)
 
 #plot(variable_tree, type = "index")
