@@ -115,7 +115,6 @@ PCA(newdata.SE.dis)
 
 ##Validamos el PCA
 library(psych)
-KMO(newdata.SE.dis[ ,1:8])
 cortest.bartlett(newdata.SE.dis[ ,1:8])
 
 # Hacemos el dendograma 
