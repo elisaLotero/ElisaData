@@ -1,0 +1,143 @@
+---
+title: "SCA_mapas"
+author: "Elisa Lotero Velasquez"
+date: "3/6/2022"
+output: pdf_document
+---
+Cargamos librerias
+```{r}
+library(ca)
+library(maditr)
+library(tidyverse)
+library(dplyr)
+
+library("FactoMineR")
+library("factoextra")
+
+library("gplots")
+```
+
+Seleccionamos la base de datos completa y la base de datos de los mercados 
+```{r}
+setwd("~/DOCTORADO/TESIS/semestre 7/paper_mapas/R")
+data<-read.csv("datos_SCA-landscape.csv", header = TRUE)
+```
+<!-- Definimos la bd de variables socioeconomicas incluyendo el proceso para definir la variables de consumo de silvestres  -->
+<!-- ```{r} -->
+<!-- data.diversidad <- data %>% select(c(ï..comunidad, num.entrevista , nombre.recurso, tipo.mercado.venta)) %>% -->
+<!--   distinct() -->
+
+<!-- data.diversidad$conteo<-1 -->
+
+<!-- data.diversidad <- data.diversidad %>%  -->
+<!--   group_by(ï..comunidad, num.entrevista, tipo.mercado.venta)%>% -->
+<!--   summarise(no.productos = sum(conteo)) -->
+
+<!-- data.diversidad$prop.venta <- 0 -->
+
+<!-- for (i in 1:dim(data.diversidad)[1]){ -->
+<!--   if (data.diversidad$no.productos[i] <= 7){ -->
+<!--     data.diversidad$prop.venta[i] <- "bajo" -->
+<!--   } else { -->
+<!--     if (data.diversidad$no.productos[i] <= 10){ -->
+<!--       data.diversidad$prop.venta[i] <- "medio" -->
+<!--     } else { -->
+<!--       data.diversidad$prop.venta[i] <- "alto" -->
+<!--     } -->
+<!--   } -->
+<!-- } -->
+
+<!-- ``` -->
+
+
+```{r}
+# data<-merge(x=data, y=data.diversidad, by.x = c("ï..comunidad", "num.entrevista", "tipo.mercado.venta"), by.y = c("ï..comunidad", "num.entrevista",  "tipo.mercado.venta"), all = TRUE)
+
+data <- data %>%
+  mutate(across(where(is.numeric), .fns = function(x) {format(round(x, 2), nsmall = 2)}))
+```
+
+```{r}
+
+data_conteo <- data %>%
+  select(c(ï..comunidad, market.type))
+
+data_conteo1 <- data %>%
+  select(c(ï..comunidad, no.markets))
+
+data_conteo<-aggregate(cbind(data_conteo[0],mentions=1), data_conteo, length)
+data_conteo1<-aggregate(cbind(data_conteo1[0],mentions=1), data_conteo1, length)
+
+data_conteo<-dcast(data_conteo, ï..comunidad ~ market.type) 
+data_conteo[is.na(data_conteo)] <- 0
+
+data_conteo1<-dcast(data_conteo1, ï..comunidad ~ no.markets) 
+data_conteo1[is.na(data_conteo1)] <- 0
+
+```
+
+```{r}
+data1 <- data %>%
+  select(c(landscape, market.type))
+
+
+data2 <- data %>%
+  select(c(landscape, no.markets))
+
+```
+
+```{r}
+data1<-aggregate(cbind(data1[0],mentions=1), data1, length)
+data2<-aggregate(cbind(data2[0],mentions=1), data2, length)
+
+```
+
+```{r}
+data1<-dcast(data1, landscape ~ market.type) 
+
+data1[is.na(data1)] <- 0
+
+data2<-dcast(data2, landscape ~ no.markets) 
+
+data2[is.na(data2)] <- 0
+
+```
+
+Hacemos el SCA1
+```{r}
+
+dataSCA1 <- data1[,-1]
+
+dataSCA1table <- as.table(as.matrix(dataSCA1))
+
+balloonplot(t(dataSCA1table), main ="", xlab ="", ylab="",
+            label = FALSE, show.margins = FALSE)
+
+chisq <- chisq.test(dataSCA1table)
+chisq
+
+#install.packages("chisq.posthoc.test")
+library(chisq.posthoc.test)
+
+chisq.posthoc.test(dataSCA1table,
+                   method = "bonferroni")
+```
+Hacemos el SCA2
+```{r}
+
+dataSCA2 <- data2[,-1]
+
+dataSCA2table <- as.table(as.matrix(dataSCA2))
+
+balloonplot(t(dataSCA2table), main ="", xlab ="", ylab="",
+            label = FALSE, show.margins = FALSE)
+
+chisq2 <- chisq.test(dataSCA2table)
+chisq2
+
+#install.packages("chisq.posthoc.test")
+library(chisq.posthoc.test)
+
+chisq.posthoc.test(dataSCA2table,
+                   method = "bonferroni")
+```
